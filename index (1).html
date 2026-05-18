@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE SYSTEM — Daily Leveling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050508;
+  --bg2: #0a0a10;
+  --bg3: #0f0f18;
+  --border: rgba(120,80,255,0.2);
+  --border2: rgba(120,80,255,0.4);
+  --purple: #7c3aed;
+  --purple2: #a78bfa;
+  --purple3: #c4b5fd;
+  --red: #ef4444;
+  --red2: #fca5a5;
+  --gold: #f59e0b;
+  --gold2: #fcd34d;
+  --green: #10b981;
+  --blue: #3b82f6;
+  --cyan: #06b6d4;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #475569;
+  --font-display: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+
+/* Scanline overlay */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:1000}
+
+/* Grid bg */
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(120,80,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(120,80,255,0.04) 1px,transparent 1px);background-size:40px 40px;z-index:0}
+
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:20px 16px 60px}
+
+/* HEADER */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.header-left{}
+.system-label{font-family:var(--font-mono);font-size:11px;color:var(--purple2);letter-spacing:0.15em;margin-bottom:4px}
+.player-name-display{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--text);line-height:1;cursor:pointer}
+.player-name-display:hover{color:var(--purple2)}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.date-display{font-family:var(--font-mono);font-size:12px;color:var(--text3)}
+.week-display{font-family:var(--font-mono);font-size:11px;color:var(--purple);background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);padding:3px 8px;border-radius:3px}
+
+/* RANK CARD */
+.rank-section{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden}
+.rank-section::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+.rank-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:500px){.rank-grid{grid-template-columns:1fr 1fr}}
+.stat-box{text-align:center}
+.stat-num{font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--purple2);line-height:1}
+.stat-lbl{font-size:11px;color:var(--text3);font-family:var(--font-mono);letter-spacing:0.08em;margin-top:2px}
+.rank-badge-large{font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--gold);text-shadow:0 0 20px rgba(245,158,11,0.4);line-height:1}
+.rank-title{font-size:11px;color:var(--text3);font-family:var(--font-mono);letter-spacing:0.1em;margin-top:2px}
+
+/* XP BAR */
+.xp-section{margin-bottom:4px}
+.xp-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-bottom:6px}
+.xp-track{height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--purple2));border-radius:3px;transition:width 0.6s cubic-bezier(.34,1.56,.64,1)}
+.level-xp-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:4px}
+
+/* WEEKLY PENALTY WARNING */
+.penalty-block{background:#0d0505;border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:14px 16px;margin-bottom:20px}
+.penalty-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.penalty-header-icon{font-size:16px;color:var(--red)}
+.penalty-header-text{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--red2);letter-spacing:0.05em}
+.penalty-list{display:flex;flex-direction:column;gap:6px}
+.penalty-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:5px}
+.penalty-item-icon{font-size:12px;color:var(--red);margin-top:1px;white-space:nowrap;font-family:var(--font-mono)}
+.penalty-item-text{font-size:13px;color:var(--red2);line-height:1.4}
+.penalty-item-done{opacity:0.4;text-decoration:line-through}
+.penalty-complete-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red2);font-size:11px;font-family:var(--font-mono);padding:3px 8px;border-radius:3px;cursor:pointer;white-space:nowrap;margin-left:auto;transition:all 0.2s}
+.penalty-complete-btn:hover{background:rgba(239,68,68,0.25)}
+
+/* STREAK ROW */
+.streak-section{margin-bottom:20px}
+.section-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:0.12em;margin-bottom:8px}
+.streak-days{display:flex;gap:6px;flex-wrap:wrap}
+.streak-day{width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;border:1px solid}
+.streak-day.done{background:rgba(124,58,237,0.25);border-color:var(--purple);color:var(--purple2)}
+.streak-day.miss{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:var(--red2)}
+.streak-day.today{background:rgba(245,158,11,0.1);border-color:var(--gold);color:var(--gold)}
+.streak-day.future{background:transparent;border-color:rgba(255,255,255,0.06);color:var(--text3)}
+
+/* DOMAIN GRID */
+.domains-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:580px){.domains-grid{grid-template-columns:1fr}}
+
+.domain-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative}
+.domain-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.domain-card[data-domain="fitness"]::before{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.domain-card[data-domain="work"]::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.domain-card[data-domain="skills"]::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.domain-card[data-domain="growth"]::before{background:linear-gradient(90deg,#f59e0b,#fcd34d)}
+
+.domain-head{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid var(--border)}
+.domain-icon{font-size:18px}
+.domain-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--text);letter-spacing:0.04em;flex:1}
+.domain-count{font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+.domain-body{padding:10px 14px 12px}
+.quest-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.quest-row:last-of-type{border-bottom:none}
+.quest-cb{width:16px;height:16px;min-width:16px;border:1.5px solid rgba(120,80,255,0.4);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:transparent;margin-top:1px}
+.quest-cb.checked{background:var(--purple);border-color:var(--purple)}
+.quest-cb.checked::after{content:'✓';font-size:10px;color:white}
+.quest-info{flex:1}
+.quest-name{font-size:13px;color:var(--text);line-height:1.3;cursor:pointer;transition:color 0.2s}
+.quest-name.done{color:var(--text3);text-decoration:line-through}
+.quest-meta{display:flex;gap:8px;margin-top:2px;align-items:center}
+.quest-xp{font-family:var(--font-mono);font-size:10px;color:var(--purple2)}
+.quest-diff{font-family:var(--font-mono);font-size:9px;padding:1px 5px;border-radius:2px}
+.diff-easy{background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.2)}
+.diff-medium{background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)}
+.diff-hard{background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2)}
+.diff-extreme{background:rgba(168,85,247,0.15);color:#c4b5fd;border:1px solid rgba(168,85,247,0.3)}
+.quest-del{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 4px;border-radius:3px;line-height:1;transition:color 0.2s;opacity:0}
+.quest-row:hover .quest-del{opacity:1}
+.quest-del:hover{color:var(--red)}
+
+.add-quest-btn{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--text3);background:transparent;border:1px dashed rgba(120,80,255,0.2);border-radius:4px;padding:6px 10px;cursor:pointer;width:100%;margin-top:8px;transition:all 0.2s;letter-spacing:0.05em}
+.add-quest-btn:hover{color:var(--purple2);border-color:rgba(120,80,255,0.5)}
+
+/* ADD DOMAIN */
+.add-domain-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px dashed rgba(120,80,255,0.25);border-radius:8px;padding:20px;cursor:pointer;font-family:var(--font-mono);font-size:12px;color:var(--text3);letter-spacing:0.08em;transition:all 0.2s;width:100%}
+.add-domain-btn:hover{border-color:rgba(120,80,255,0.5);color:var(--purple2)}
+
+/* WEEKLY DIFFICULTY */
+.difficulty-banner{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.diff-info{display:flex;align-items:center;gap:10px}
+.diff-label{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:0.08em}
+.diff-value{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gold)}
+.diff-week{font-family:var(--font-mono);font-size:10px;color:var(--text3)}
+.diff-bars{display:flex;gap:3px}
+.diff-bar{width:16px;height:16px;border-radius:2px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08)}
+.diff-bar.active{background:var(--gold);border-color:var(--gold)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay.hidden{display:none}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:100%;max-width:400px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent);border-radius:10px 10px 0 0}
+.modal-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);margin-bottom:20px;letter-spacing:0.04em}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none;transition:border-color 0.2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--purple2)}
+.field textarea{resize:vertical;min-height:70px}
+.field select option{background:var(--bg2)}
+.modal-btns{display:flex;gap:8px;margin-top:20px}
+.btn-ok{flex:1;background:var(--purple);color:white;border:none;border-radius:5px;padding:10px;font-family:var(--font-display);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.05em;transition:background 0.2s}
+.btn-ok:hover{background:#6d28d9}
+.btn-cancel{flex:1;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:5px;padding:10px;font-family:var(--font-display);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.05em;transition:all 0.2s}
+.btn-cancel:hover{border-color:var(--border2);color:var(--text)}
+
+/* LEVEL UP FLASH */
+.levelup-flash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;background:rgba(0,0,0,0.9);pointer-events:none;opacity:0;transition:opacity 0.3s}
+.levelup-flash.show{pointer-events:all;opacity:1}
+.levelup-inner{text-align:center;animation:levelupPop 0.5s cubic-bezier(.34,1.56,.64,1)}
+.levelup-text{font-family:var(--font-display);font-size:60px;font-weight:700;color:var(--gold);text-shadow:0 0 40px rgba(245,158,11,0.6);letter-spacing:0.08em;line-height:1}
+.levelup-sub{font-family:var(--font-display);font-size:22px;color:var(--purple2);margin-top:8px;letter-spacing:0.06em}
+.levelup-rank{font-family:var(--font-mono);font-size:14px;color:var(--text3);margin-top:12px}
+.levelup-close{margin-top:24px;background:var(--purple);color:white;border:none;border-radius:5px;padding:10px 28px;font-family:var(--font-display);font-size:16px;font-weight:600;cursor:pointer;letter-spacing:0.06em}
+@keyframes levelupPop{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--purple);color:var(--purple2);padding:10px 16px;border-radius:6px;font-family:var(--font-mono);font-size:12px;letter-spacing:0.06em;z-index:300;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.penalty-toast{border-color:var(--red);color:var(--red2)}
+
+/* SETTINGS ROW */
+.settings-row{display:flex;justify-content:flex-end;gap:8px;margin-bottom:20px}
+.settings-btn{background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--text3);font-family:var(--font-mono);font-size:11px;padding:6px 12px;cursor:pointer;letter-spacing:0.06em;transition:all 0.2s}
+.settings-btn:hover{border-color:var(--border2);color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div class="app" id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="system-label">// THE SYSTEM — DAILY PROTOCOL</div>
+      <div class="player-name-display" id="player-name-display" onclick="editName()" title="Click to edit name">HUNTER</div>
+    </div>
+    <div class="header-right">
+      <div class="date-display" id="date-display"></div>
+      <div class="week-display" id="week-display">WEEK 1</div>
+    </div>
+  </div>
+
+  <div class="settings-row">
+    <button class="settings-btn" onclick="openNewDay()">↺ NEW DAY</button>
+    <button class="settings-btn" onclick="openAddDomain()">+ DOMAIN</button>
+  </div>
+
+  <div class="rank-section">
+    <div class="rank-grid">
+      <div class="stat-box">
+        <div class="rank-badge-large" id="rank-display">E</div>
+        <div class="rank-title">CURRENT RANK</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="level-display">1</div>
+        <div class="stat-lbl">LEVEL</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="streak-display">0</div>
+        <div class="stat-lbl">STREAK</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="totalxp-display">0</div>
+        <div class="stat-lbl">TOTAL XP</div>
+      </div>
+    </div>
+    <div class="xp-section">
+      <div class="xp-labels">
+        <span>LEVEL PROGRESS</span>
+        <span id="xp-label">0 / 200 XP</span>
+      </div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="difficulty-banner" id="difficulty-banner">
+    <div class="diff-info">
+      <div>
+        <div class="diff-label">WEEKLY DIFFICULTY</div>
+        <div class="diff-value" id="diff-value">NORMAL</div>
+      </div>
+      <div>
+        <div class="diff-week" id="diff-week-label">Week 1 of your journey</div>
+        <div class="diff-bars" id="diff-bars"></div>
+      </div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-align:right">XP MULTIPLIER<br><span id="diff-multiplier" style="color:var(--gold);font-size:14px">×1.0</span></div>
+  </div>
+
+  <div class="section-label">7-DAY STREAK</div>
+  <div class="streak-section">
+    <div class="streak-days" id="streak-days"></div>
+  </div>
+
+  <div id="penalty-block-container"></div>
+
+  <div class="domains-grid" id="domains-grid"></div>
+
+  <button class="add-domain-btn" onclick="openAddDomain()">+ ADD NEW DOMAIN</button>
+</div>
+
+<!-- MODAL -->
+<div class="overlay hidden" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">ADD QUEST</div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<!-- LEVEL UP -->
+<div class="levelup-flash" id="levelup-flash">
+  <div class="levelup-inner">
+    <div class="levelup-text">⚡ LEVEL UP ⚡</div>
+    <div class="levelup-sub" id="levelup-sub">You have grown stronger</div>
+    <div class="levelup-rank" id="levelup-rank"></div>
+    <button class="levelup-close" onclick="dismissLevelup()">CONTINUE</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────
+const RANK_THRESHOLDS = [
+  {level:1,rank:'E',title:'Weak Hunter'},
+  {level:5,rank:'D',title:'Iron Hunter'},
+  {level:10,rank:'C',title:'Shadow Walker'},
+  {level:20,rank:'B',title:'Gate Raider'},
+  {level:35,rank:'A',title:'Dungeon Master'},
+  {level:50,rank:'S',title:'Awakened'},
+  {level:70,rank:'SS',title:'Elite Sovereign'},
+  {level:90,rank:'SSS',title:'Transcendent'},
+  {level:110,rank:'NATIONAL',title:'National Hunter'},
+  {level:130,rank:'MONARCH',title:'Shadow Monarch'}
+];
+
+const DIFFICULTY_SCALE = [
+  {week:1,label:'NORMAL',mult:1.0},
+  {week:2,label:'HARD',mult:1.15},
+  {week:3,label:'BRUTAL',mult:1.3},
+  {week:4,label:'EXTREME',mult:1.5},
+  {week:5,label:'NIGHTMARE',mult:1.7},
+  {week:6,label:'MONARCH',mult:2.0}
+];
+
+// Punishments keyed by domain id
+const PUNISHMENTS = {
+  fitness:[
+    'Complete 200 push-ups (break into sets, no time limit)',
+    'Run 3km outside right now — no excuses',
+    'Do 150 squats and 100 lunges before sleeping',
+    '5 sets of max-rep burpees with 90s rest between sets',
+    '20-minute non-stop plank holds (accumulated)'
+  ],
+  work:[
+    'Write a 500-word reflection on what you wasted time on today',
+    'Sit down for 2 hours of deep work right now — phone off, no exceptions',
+    'Map out your entire project plan in writing before bed',
+    'Complete 3 tasks from your backlog before midnight',
+    'Write a brutally honest audit of your productivity this week'
+  ],
+  skills:[
+    'Study for 90 minutes tonight without stopping — no phone',
+    'Write detailed notes summarizing everything you should have learned today',
+    'Watch and take notes on 2 full tutorial videos tonight',
+    'Build a small project / exercise applying the skill you skipped',
+    'Teach someone (or explain to yourself out loud) the skill you avoided'
+  ],
+  growth:[
+    'Read 40 pages before you sleep tonight — non-negotiable',
+    'Write a 1-page reflection on a concept from your last book',
+    'Have one real conversation and practice active listening — no phone for 1 hour',
+    'Write 5 things you are grateful for and 5 things you will change tomorrow',
+    'Spend 30 minutes in complete silence — no phone, no music, just thinking'
+  ]
+};
+
+// ─── STATE ──────────────────────────────────────────────────────
+const DEFAULT_STATE = {
+  playerName:'HUNTER',
+  level:1,
+  totalXP:0,
+  streak:0,
+  penalties:[],
+  streakHistory:[],
+  startDate: new Date().toISOString().split('T')[0],
+  domains:[
+    {id:'fitness',title:'Fitness',icon:'💪',color:'#a78bfa',quests:[
+      {id:'f1',text:'Gym / workout session',xp:25,diff:'hard',done:false,penalty:null},
+      {id:'f2',text:'10,000 steps or cardio',xp:10,diff:'medium',done:false,penalty:null},
+      {id:'f3',text:'Stretch or mobility (15 min)',xp:5,diff:'easy',done:false,penalty:null}
+    ]},
+    {id:'work',title:'Work & Projects',icon:'💻',color:'#38bdf8',quests:[
+      {id:'w1',text:'Deep work session (1+ hr)',xp:25,diff:'hard',done:false,penalty:null},
+      {id:'w2',text:'Learn something new for work',xp:15,diff:'medium',done:false,penalty:null},
+      {id:'w3',text:'Plan & review tomorrow',xp:5,diff:'easy',done:false,penalty:null}
+    ]},
+    {id:'skills',title:'Skills & Learning',icon:'🎯',color:'#34d399',quests:[
+      {id:'s1',text:'Course / certification study',xp:20,diff:'hard',done:false,penalty:null},
+      {id:'s2',text:'Practice a technical skill',xp:15,diff:'medium',done:false,penalty:null},
+      {id:'s3',text:'Watch a learning video',xp:5,diff:'easy',done:false,penalty:null}
+    ]},
+    {id:'growth',title:'Reading & Soft Skills',icon:'📚',color:'#fcd34d',quests:[
+      {id:'g1',text:'Read (20+ pages)',xp:15,diff:'medium',done:false,penalty:null},
+      {id:'g2',text:'Journaling / reflection',xp:10,diff:'easy',done:false,penalty:null},
+      {id:'g3',text:'Communication / social practice',xp:10,diff:'medium',done:false,penalty:null}
+    ]}
+  ],
+  lastDay:''
+};
+
+function load(){
+  try{
+    const s = localStorage.getItem('sys_v2');
+    return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }catch{ return JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+}
+function save(){
+  try{ localStorage.setItem('sys_v2', JSON.stringify(S)); }catch{}
+}
+
+let S = load();
+
+// ─── HELPERS ────────────────────────────────────────────────────
+function today(){ return new Date().toISOString().split('T')[0]; }
+
+function getWeek(){
+  const start = new Date(S.startDate+'T00:00:00');
+  const now = new Date();
+  const diff = Math.floor((now - start) / (1000*60*60*24*7));
+  return Math.min(diff + 1, 6);
+}
+
+function getDifficulty(){
+  const w = getWeek();
+  return DIFFICULTY_SCALE[Math.min(w-1, DIFFICULTY_SCALE.length-1)];
+}
+
+function getRankInfo(level){
+  let r = RANK_THRESHOLDS[0];
+  for(const t of RANK_THRESHOLDS){ if(level >= t.level) r = t; }
+  return r;
+}
+
+function getNextLevelXP(level){
+  return Math.floor(200 * Math.pow(1.12, level - 1));
+}
+
+function checkNewDay(){
+  const t = today();
+  if(!S.lastDay){ S.lastDay = t; save(); return; }
+  if(S.lastDay === t) return;
+
+  // Process yesterday
+  const missedQuests = [];
+  S.domains.forEach(d => {
+    d.quests.forEach(q => {
+      if(!q.done){
+        const punList = PUNISHMENTS[d.id] || PUNISHMENTS.growth;
+        const pun = punList[Math.floor(Math.random()*punList.length)];
+        missedQuests.push({id:'p_'+Date.now()+'_'+Math.random(),domainId:d.id,questText:q.text,punishment:pun,done:false});
+      }
+    });
+  });
+
+  if(missedQuests.length > 0){
+    S.penalties = [...S.penalties, ...missedQuests];
+    const totalDone = S.domains.reduce((a,d)=>a+d.quests.filter(q=>q.done).length,0);
+    const totalAll = S.domains.reduce((a,d)=>a+d.quests.length,0);
+    if(totalDone/totalAll < 0.5) S.streak = 0;
+    S.streakHistory.push({date:S.lastDay,done:false});
+  } else {
+    S.streak++;
+    S.streakHistory.push({date:S.lastDay,done:true});
+  }
+
+  S.streakHistory = S.streakHistory.slice(-14);
+  S.domains.forEach(d => d.quests.forEach(q => q.done = false));
+  S.lastDay = t;
+  save();
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────
+function render(){
+  const d = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('date-display').textContent = `${days[d.getDay()].toUpperCase()}, ${months[d.getMonth()].toUpperCase()} ${d.getDate()}`;
+
+  const week = getWeek();
+  document.getElementById('week-display').textContent = `WEEK ${week}`;
+  document.getElementById('player-name-display').textContent = S.playerName;
+
+  const rank = getRankInfo(S.level);
+  document.getElementById('rank-display').textContent = rank.rank;
+  document.getElementById('level-display').textContent = S.level;
+  document.getElementById('streak-display').textContent = S.streak;
+  document.getElementById('totalxp-display').textContent = S.totalXP;
+
+  const nextXP = getNextLevelXP(S.level);
+  const curXP = S.totalXP % nextXP;
+  const pct = Math.round((curXP / nextXP) * 100);
+  document.getElementById('xp-label').textContent = `${curXP} / ${nextXP} XP`;
+  document.getElementById('xp-fill').style.width = pct + '%';
+
+  // Difficulty
+  const diff = getDifficulty();
+  document.getElementById('diff-value').textContent = diff.label;
+  document.getElementById('diff-week-label').textContent = `Week ${week} of your journey`;
+  document.getElementById('diff-multiplier').textContent = '×' + diff.mult.toFixed(1);
+  const bars = document.getElementById('diff-bars');
+  bars.innerHTML = '';
+  for(let i=0;i<6;i++){
+    const b = document.createElement('div');
+    b.className = 'diff-bar' + (i < week ? ' active' : '');
+    bars.appendChild(b);
+  }
+
+  // Streak row
+  const sc = document.getElementById('streak-days');
+  sc.innerHTML = '';
+  const history = S.streakHistory.slice(-6);
+  const dayLetters = ['S','M','T','W','T','F','S'];
+  history.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'streak-day ' + (h.done ? 'done' : 'miss');
+    el.textContent = dayLetters[new Date(h.date+'T12:00:00').getDay()];
+    el.title = h.date;
+    sc.appendChild(el);
+  });
+  const todayEl = document.createElement('div');
+  todayEl.className = 'streak-day today';
+  todayEl.textContent = dayLetters[d.getDay()];
+  sc.appendChild(todayEl);
+
+  // Penalties
+  const activePenalties = S.penalties.filter(p => !p.done);
+  const pc = document.getElementById('penalty-block-container');
+  pc.innerHTML = '';
+  if(activePenalties.length > 0){
+    const block = document.createElement('div');
+    block.className = 'penalty-block';
+    block.innerHTML = `
+      <div class="penalty-header">
+        <span class="penalty-header-icon">☠</span>
+        <span class="penalty-header-text">SYSTEM PUNISHMENT — ${activePenalties.length} ACTIVE</span>
+      </div>
+      <div class="penalty-list" id="plist"></div>
+    `;
+    pc.appendChild(block);
+    const plist = block.querySelector('#plist');
+    activePenalties.forEach(p => {
+      const pi = document.createElement('div');
+      pi.className = 'penalty-item';
+      pi.innerHTML = `
+        <span class="penalty-item-icon">⚠</span>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:3px">MISSED: ${p.questText}</div>
+          <div class="penalty-item-text">${p.punishment}</div>
+        </div>
+        <button class="penalty-complete-btn" onclick="completePenalty('${p.id}')">DONE</button>
+      `;
+      plist.appendChild(pi);
+    });
+  }
+
+  // Domains
+  const dg = document.getElementById('domains-grid');
+  dg.innerHTML = '';
+  const mult = getDifficulty().mult;
+  S.domains.forEach(domain => {
+    const done = domain.quests.filter(q=>q.done).length;
+    const card = document.createElement('div');
+    card.className = 'domain-card';
+    card.setAttribute('data-domain', domain.id);
+    card.innerHTML = `
+      <div class="domain-head">
+        <span class="domain-icon">${domain.icon}</span>
+        <span class="domain-title">${domain.title}</span>
+        <span class="domain-count">${done}/${domain.quests.length}</span>
+      </div>
+      <div class="domain-body" id="qlist-${domain.id}">
+        ${domain.quests.map(q => `
+          <div class="quest-row" id="qrow-${q.id}">
+            <div class="quest-cb ${q.done?'checked':''}" onclick="toggleQuest('${domain.id}','${q.id}')" role="checkbox" aria-checked="${q.done}"></div>
+            <div class="quest-info">
+              <div class="quest-name ${q.done?'done':''}" onclick="toggleQuest('${domain.id}','${q.id}')">${q.text}</div>
+              <div class="quest-meta">
+                <span class="quest-xp">+${Math.round(q.xp * mult)} XP</span>
+                <span class="quest-diff diff-${q.diff}">${q.diff}</span>
+              </div>
+            </div>
+            <button class="quest-del" onclick="deleteQuest('${domain.id}','${q.id}')" title="Delete quest">×</button>
+          </div>
+        `).join('')}
+        <button class="add-quest-btn" onclick="openAddQuest('${domain.id}')">+ ADD QUEST</button>
+      </div>
+    `;
+    dg.appendChild(card);
+  });
+}
+
+// ─── ACTIONS ────────────────────────────────────────────────────
+let prevLevel = S.level;
+function toggleQuest(domainId, questId){
+  const domain = S.domains.find(d=>d.id===domainId);
+  const quest = domain.quests.find(q=>q.id===questId);
+  quest.done = !quest.done;
+  const mult = getDifficulty().mult;
+  if(quest.done){
+    const gained = Math.round(quest.xp * mult);
+    S.totalXP += gained;
+    // Level up check
+    let xpForNext = getNextLevelXP(S.level);
+    while(S.totalXP >= S.totalXP - (S.totalXP % xpForNext) + xpForNext){
+      const curInLevel = S.totalXP % xpForNext;
+      if(curInLevel === 0 && S.totalXP > 0) break;
+      // simple recalc
+      break;
+    }
+    const newLevel = Math.floor(1 + Math.log(S.totalXP/200 + 1) / Math.log(1.12));
+    const oldLevel = S.level;
+    S.level = Math.max(1, newLevel);
+    save();
+    showToast(`+${gained} XP — ${quest.text}`);
+    if(S.level > oldLevel){ setTimeout(()=>showLevelUp(oldLevel),400); }
+  } else {
+    const gained = Math.round(quest.xp * mult);
+    S.totalXP = Math.max(0, S.totalXP - gained);
+    const newLevel = Math.max(1, Math.floor(1 + Math.log(S.totalXP/200 + 1) / Math.log(1.12)));
+    S.level = newLevel;
+    save();
+  }
+  render();
+}
+
+function completePenalty(id){
+  const p = S.penalties.find(p=>p.id===id);
+  if(p){
+    p.done = true;
+    S.totalXP += 15;
+    save();
+    showToast('PENALTY CLEARED — +15 XP');
+    render();
+  }
+}
+
+function deleteQuest(domainId, questId){
+  const domain = S.domains.find(d=>d.id===domainId);
+  domain.quests = domain.quests.filter(q=>q.id!==questId);
+  save(); render();
+}
+
+function openNewDay(){
+  if(!confirm('Start a new day? Uncompleted quests become punishments.')) return;
+  const t = today();
+  const missedQuests = [];
+  S.domains.forEach(d => {
+    d.quests.forEach(q => {
+      if(!q.done){
+        const punList = PUNISHMENTS[d.id] || PUNISHMENTS.growth;
+        const pun = punList[Math.floor(Math.random()*punList.length)];
+        missedQuests.push({id:'p_'+Date.now()+'_'+q.id,domainId:d.id,questText:q.text,punishment:pun,done:false});
+      }
+    });
+  });
+  if(missedQuests.length > 0){
+    S.penalties = [...S.penalties, ...missedQuests];
+    S.streakHistory.push({date:S.lastDay||t,done:false});
+    S.streak = 0;
+  } else {
+    S.streak++;
+    S.streakHistory.push({date:S.lastDay||t,done:true});
+  }
+  S.streakHistory = S.streakHistory.slice(-14);
+  S.domains.forEach(d => d.quests.forEach(q => q.done = false));
+  S.lastDay = t;
+  save(); render();
+  showToast(missedQuests.length > 0 ? `DAY OVER — ${missedQuests.length} PUNISHMENTS ISSUED` : 'PERFECT DAY! STREAK +1');
+}
+
+// ─── MODALS ─────────────────────────────────────────────────────
+function openAddQuest(domainId){
+  const domain = S.domains.find(d=>d.id===domainId);
+  document.getElementById('modal-title').textContent = `ADD QUEST — ${domain.title.toUpperCase()}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="field"><label>QUEST NAME</label><input type="text" id="m-name" placeholder="e.g. Run 5km" /></div>
+    <div class="field"><label>XP REWARD (BASE)</label>
+      <select id="m-xp">
+        <option value="5">5 XP — Quick (5 min)</option>
+        <option value="10">10 XP — Easy (15 min)</option>
+        <option value="15" selected>15 XP — Moderate (30 min)</option>
+        <option value="20">20 XP — Solid (45 min)</option>
+        <option value="25">25 XP — Hard (60+ min)</option>
+        <option value="35">35 XP — Intense (2+ hrs)</option>
+      </select>
+    </div>
+    <div class="field"><label>DIFFICULTY</label>
+      <select id="m-diff">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="extreme">Extreme</option>
+      </select>
+    </div>
+    <div class="field"><label>CUSTOM PUNISHMENT (optional)</label><textarea id="m-pun" placeholder="Leave blank for auto-generated punishment"></textarea></div>
+  `;
+  document.getElementById('modal-btns').innerHTML = `
+    <button class="btn-cancel" onclick="closeOverlay()">CANCEL</button>
+    <button class="btn-ok" onclick="confirmAddQuest('${domainId}')">ADD</button>
+  `;
+  document.getElementById('overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('m-name').focus(),100);
+}
+
+function confirmAddQuest(domainId){
+  const name = document.getElementById('m-name').value.trim();
+  if(!name){ showToast('Enter a quest name'); return; }
+  const xp = parseInt(document.getElementById('m-xp').value);
+  const diff = document.getElementById('m-diff').value;
+  const pun = document.getElementById('m-pun').value.trim();
+  const domain = S.domains.find(d=>d.id===domainId);
+  domain.quests.push({id:'q_'+Date.now(),text:name,xp,diff,done:false,customPunishment:pun||null});
+  save(); closeOverlay(); render();
+}
+
+function openAddDomain(){
+  document.getElementById('modal-title').textContent = 'ADD DOMAIN';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="field"><label>DOMAIN NAME</label><input type="text" id="m-dname" placeholder="e.g. Finance, Health, Social..." /></div>
+    <div class="field"><label>ICON (emoji)</label><input type="text" id="m-dicon" placeholder="🎯" maxlength="2" /></div>
+  `;
+  document.getElementById('modal-btns').innerHTML = `
+    <button class="btn-cancel" onclick="closeOverlay()">CANCEL</button>
+    <button class="btn-ok" onclick="confirmAddDomain()">CREATE</button>
+  `;
+  document.getElementById('overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('m-dname').focus(),100);
+}
+
+function confirmAddDomain(){
+  const name = document.getElementById('m-dname').value.trim();
+  if(!name){ showToast('Enter a domain name'); return; }
+  const icon = document.getElementById('m-dicon').value.trim() || '⭐';
+  const id = 'dom_'+Date.now();
+  S.domains.push({id,title:name,icon,color:'#a78bfa',quests:[]});
+  save(); closeOverlay(); render();
+}
+
+function editName(){
+  document.getElementById('modal-title').textContent = 'EDIT HUNTER NAME';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="field"><label>YOUR NAME</label><input type="text" id="m-pname" value="${S.playerName}" /></div>
+  `;
+  document.getElementById('modal-btns').innerHTML = `
+    <button class="btn-cancel" onclick="closeOverlay()">CANCEL</button>
+    <button class="btn-ok" onclick="confirmEditName()">SAVE</button>
+  `;
+  document.getElementById('overlay').classList.remove('hidden');
+  setTimeout(()=>{const i=document.getElementById('m-pname');i.focus();i.select();},100);
+}
+
+function confirmEditName(){
+  const n = document.getElementById('m-pname').value.trim();
+  if(n){ S.playerName = n.toUpperCase(); save(); }
+  closeOverlay(); render();
+}
+
+function closeOverlay(e){
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+// ─── LEVEL UP ───────────────────────────────────────────────────
+function showLevelUp(oldLevel){
+  const rank = getRankInfo(S.level);
+  const oldRank = getRankInfo(oldLevel);
+  document.getElementById('levelup-sub').textContent = `LEVEL ${S.level} — ${rank.title}`;
+  document.getElementById('levelup-rank').textContent = oldRank.rank !== rank.rank ? `RANK UP: ${oldRank.rank} → ${rank.rank}` : `Rank: ${rank.rank}`;
+  document.getElementById('levelup-flash').classList.add('show');
+}
+function dismissLevelup(){
+  document.getElementById('levelup-flash').classList.remove('show');
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, isPenalty=false){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isPenalty?' penalty-toast':'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ─── INIT ───────────────────────────────────────────────────────
+checkNewDay();
+render();
+</script>
+</body>
+</html>
